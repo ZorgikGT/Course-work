@@ -1,0 +1,405 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+
+namespace tyagniryadno
+{
+    abstract class Info
+    {
+        public int Key { get; set; }
+        public abstract string Information();
+    }
+
+    class Farmer:Info
+    {
+        public string Name { get; set; }
+        public string Address { get; set; } 
+        public int Region { get; set; }
+        public Farmer(int key, string name, string address, int region)
+        {
+            this.Key = key;
+            this.Name = name;
+            this.Address = address;
+            this.Region = region;
+        }
+        public override string Information()
+        {
+            string info = Key + ";" + Name + ";" + Address;
+            return info;
+        }
+    }
+    class Product:Info
+    {
+        public string ProductName { get; set; }
+        public int   { get; set; }
+        public double Price { get; set; }
+        public int Count { get; set; }
+        public Product(int key,string productName,int quality,double price,int count)
+        {
+            this.Key = key;
+            this.ProductName = productName;
+            this.Quality = quality;
+            this.Price = price;
+            this.Count = count;
+        }
+        public override string Information()
+        {
+            string info = Key + ";" + ProductName + ";" + Quality + ";" + Price + ";" + Count;
+            return info;
+        }
+    }
+    class Need:Info
+    {
+        public string Name { get; set; }
+        public string Service { get; set; }
+        public string Tag{ get; set; }
+        public double Price { get; set; }
+        public Need(int key,string name,string service,string tag,double price)
+        {
+            this.Key = key;
+            this.Name = name;
+            this.Service = service;
+            this.Tag = tag;
+            this.Price = price;
+        }
+        public override string Information()
+        {
+            string info = Key + ";" + Name + ";" + Service + ";" + Tag + ";" + Price;
+            return info;
+        }
+    }
+
+    class Region:Info
+    {
+        public string Name { get; set; }
+        public Region(int key,string name)
+        {
+            this.Key = key;
+            this.Name = name;
+        }
+        public override string Information()
+        {
+            string info = Key + ";" + Name;
+            return info;
+        }
+    }
+
+    class JoinType:Info 
+    {
+        public int KeySecond { get; set; }
+        public JoinType(int key, int keySecond) 
+        {
+            this.Key = key;
+            this.KeySecond = keySecond;
+        }
+
+        public override string Information()
+        {
+            string info = Key + ";" + KeySecond;
+            return info;
+        }
+    }
+
+    class Program
+    {
+        static List<Farmer> FarmersList = new List<Farmer>();
+        static List<Product> ProductsList = new List<Product>();
+        static List<Need> NeedsList = new List<Need>();
+        static List<Region> RegionsList = new List<Region>();
+        static List<JoinType> FarmersProductsList = new List<JoinType>();
+        static List<JoinType> FarmersNeedsList = new List<JoinType>();
+
+        static string FarmersPath =@"/home/akter/c#/hw/Files/Farmers.txt";
+        static string ProductsPath = @"/home/akter/c#/hw/Files/Products.txt";
+        static string NeedsPath = @"/home/akter/c#/hw/Files/Needs.txt";
+        static string RegionsPath = @"/home/akter/c#/hw/Files/Regions.txt";
+        static string FarmersProductsPath = @"/home/akter/c#/hw/Files/FarmersProducts.txt";
+        static string FarmersNeedsPath = @"/home/akter/c#/hw/Files/FarmersNeeds.txt";
+        // static string TypographysPath = Directory.GetCurrentDirectory() + "\\Files\\Typographys.txt";
+
+        static void Main(string[] args)
+        {
+            ReadFile();
+
+            while(true)
+            {
+                Console.WriteLine("\n1.Фермеры области производят...");
+                Console.WriteLine("2.Что нужно фермерам?");
+                Console.WriteLine("3.Кредиты фремеров");
+                Console.WriteLine("4.Добавить продукт");
+                Console.WriteLine("5.Удалить продукт");
+                Console.WriteLine("7.Exit\n");
+
+                if (!(int.TryParse(Console.ReadLine(), out int userResponse)))
+                {
+                    Console.Clear();
+                    Console.WriteLine("Введите целое число!");
+                    Console.Clear();
+                    continue;
+                }       
+            
+                switch (userResponse)
+                {
+                    case 1:
+
+                        Console.WriteLine("Список названия регионов");
+                        foreach (var region in RegionsList)
+                        {
+                            Console.WriteLine(region.Key + ". " + region.Name);
+                        }
+                    
+                        if (!(int.TryParse(Console.ReadLine(), out int response)))
+                        {
+                            Console.Clear();
+                            Console.WriteLine("Введите целое число!");
+                            Console.Clear();
+                            continue;
+                        } 
+
+                        List<Product> distinct =  new List<Product>();              
+
+                        var listOfProducts = from product in ProductsList
+                                    join farmer in FarmersProductsList on product.Key equals farmer.KeySecond
+                                    join Farmer in FarmersList on farmer.Key equals Farmer.Key
+                                    where Farmer.Region == response
+                                    select product;              
+        
+                        distinct =  listOfProducts.Distinct().ToList();    
+                                               
+                        
+                        foreach(var product in distinct) 
+                        {
+                            Console.WriteLine(product.ProductName);
+                        }                          
+
+                        break;
+                    
+                    case 2:
+
+                        Console.WriteLine("Список фермеров");
+                        foreach (var farmer in FarmersList)
+                        {
+                            Console.WriteLine(farmer.Key + ". " + farmer.Name);
+                        }
+
+                        if (!(int.TryParse(Console.ReadLine(), out int FarmerKey)))
+                        {
+                            Console.Clear();
+                            Console.WriteLine("Введите целое число!");
+                            Console.Clear();
+                            continue;
+                        }
+
+                        var listOfNeeds = from needs in NeedsList
+                                join need in FarmersNeedsList on needs.Key equals need.KeySecond
+                                join Farmer in FarmersList on need.Key equals Farmer.Key
+                                where Farmer.Key == FarmerKey
+                                select needs;
+
+                        foreach (var need in listOfNeeds)
+                        {
+                            Console.WriteLine(need.Name);
+                        }
+                        
+                        break;
+
+                    case 3:
+
+                        var listOfFarmers = from Farmer in FarmersList
+                                join farmer in FarmersNeedsList on Farmer.Key equals farmer.Key
+                                join Need in NeedsList on farmer.KeySecond equals Need.Key
+                                group Need by new {Farmer.Key, Farmer.Name} into g
+                                select new {
+                                    Name = g.Key.Name,
+                                    Credit = g.Sum(Need => Need.Price)
+                                };
+
+                        foreach (var farmer in listOfFarmers)
+                        {
+                            Console.WriteLine(farmer.Name + " " + farmer.Credit);
+                        }
+
+                        break;
+
+                    case 4:
+
+                        Console.WriteLine("Введите название продукта");
+                        string productName = Console.ReadLine();
+
+                        Console.WriteLine("Введите качество продукта");
+                        if (!(int.TryParse(Console.ReadLine(), out int quality)))
+                        {
+                            Console.Clear();
+                            Console.WriteLine("Введите целое число!");
+                            Console.Clear();
+                            continue;
+                        }
+
+                        Console.WriteLine("Введите стоимость продукта");
+                        if (!(double.TryParse(Console.ReadLine(), out double price)))
+                        {
+                            Console.Clear();
+                            Console.WriteLine("Введите число!");
+                            Console.Clear();
+                            continue;
+                        }
+
+                        var lastProduct = ProductsList.Last();
+                        int key = Convert.ToInt32(lastProduct.Key);
+                        key++;
+                        
+                        int count = 0;
+
+                        ProductsList.Add(new Product(key, productName, quality, price, count));
+
+                        using (StreamWriter sw = new StreamWriter(ProductsPath,false,System.Text.Encoding.Default))
+                        {
+                            foreach(Product product in ProductsList)
+                            {
+                                sw.WriteLine(product.Information());
+                            }
+                        }
+
+                        break;
+
+                    case 5: 
+                        Console.WriteLine("Список продуктов");
+                        foreach (var product in ProductsList)
+                        {
+                            Console.WriteLine(product.Key + ":" + product.ProductName);
+                        }
+
+                        Console.WriteLine("Введите ключ продукта");
+                        if (!(int.TryParse(Console.ReadLine(), out int productKey)))
+                        {
+                            Console.Clear();
+                            Console.WriteLine("Введите целое число!");
+                            Console.Clear();
+                            continue;
+                        }
+                        
+                        var removingProduct = ProductsList.Where(product => product.Key == productKey).First();
+                        ProductsList.Remove(removingProduct);
+                        using (StreamWriter sw = new StreamWriter(ProductsPath, false, System.Text.Encoding.Default))
+                        {
+                            foreach (Product product in ProductsList)
+                            {
+                                sw.WriteLine(product.Information());
+                            }
+                        }
+                        Console.WriteLine("Продукт удален!");
+                        Console.ReadKey();
+                        Console.Clear();
+                        break;
+
+                    case 7:
+
+                    Console.Clear();
+                    Console.WriteLine("Вы хотите выйти? Да, нет");
+                    string reply = Console.ReadLine();
+                    
+                    if (reply == "Да" || reply == "да") {
+                        Environment.Exit(0);
+                    } else {
+                        Console.Clear();
+                        continue;
+                    }
+
+                    continue;
+                }
+            }
+        }
+
+        static void ReadFile() 
+        {
+            using (StreamReader sr = new StreamReader(FarmersPath, System.Text.Encoding.Default))
+            {
+                string line;
+                while ((line = sr.ReadLine()) != null)
+                {
+                    string[] words = line.Split(';');
+                    FarmersList.Add(new Farmer(
+                        Convert.ToInt32(words[0]),
+                        words[1],
+                        words[2],
+                        Convert.ToInt32(words[3])
+                        )
+                    );
+                }
+            }
+            using (StreamReader sr = new StreamReader(ProductsPath, System.Text.Encoding.Default))
+            {
+                string line;
+                while ((line = sr.ReadLine()) != null)
+                {
+                    string[] words = line.Split(';');
+                    ProductsList.Add(new Product(
+                        Convert.ToInt32(words[0]),
+                        words[1], Convert.ToInt32(words[2]),
+                        Convert.ToDouble(words[3]),
+                        Convert.ToInt32(words[4])
+                        )
+                    );
+                }
+            }
+            using (StreamReader sr = new StreamReader(NeedsPath, System.Text.Encoding.Default))
+            {
+                string line;
+                while ((line = sr.ReadLine()) != null)
+                {
+                    string[] words = line.Split(';');
+                    NeedsList.Add(new Need(Convert.ToInt32(words[0]),
+                        words[1],
+                        words[2],
+                        words[3],
+                        Convert.ToDouble(words[4])
+                        )
+                    );
+                }
+            }
+
+            using (StreamReader sr = new StreamReader(RegionsPath, System.Text.Encoding.Default))
+            {
+                string line;
+                while ((line = sr.ReadLine()) != null)
+                {
+                    string[] words = line.Split(';');
+                    RegionsList.Add(new Region(
+                        Convert.ToInt32(words[0]),
+                        words[1]
+                        )
+                    );
+                }
+            }
+            
+            using (StreamReader sr = new StreamReader(FarmersProductsPath, System.Text.Encoding.Default))
+            {
+                string line;
+                while ((line = sr.ReadLine()) != null)
+                {
+                    string[] words = line.Split(';');
+                    FarmersProductsList.Add(new JoinType(
+                        Convert.ToInt32(words[0]),
+                        Convert.ToInt32(words[1])
+                        )
+                    );
+                }
+            }
+
+            using (StreamReader sr = new StreamReader(FarmersNeedsPath, System.Text.Encoding.Default))
+            {
+                string line;
+                while ((line = sr.ReadLine()) != null)
+                {
+                    string[] words = line.Split(';');
+                    FarmersNeedsList.Add(new JoinType(
+                        Convert.ToInt32(words[0]),
+                        Convert.ToInt32(words[1])
+                        )
+                    );
+                }
+            } 
+        }
+    }
+}
